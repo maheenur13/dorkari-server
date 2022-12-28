@@ -1,0 +1,9 @@
+###
+
+POST http://localhost:4545/auth/login
+Content-type: application/json
+
+{
+    "phoneNumber": "01730381915",
+    "password": "12345678"
+}
