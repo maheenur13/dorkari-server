@@ -34,6 +34,15 @@ newClient.connect((err) => {
   const categoryCollection = newClient
     .db("dorkari")
     .collection("category_collection");
+  const properTyCollection = newClient
+    .db("dorkari")
+    .collection("property_collection");
+  const properTyBookingCollection = newClient
+    .db("dorkari")
+    .collection("property_booking_collection");
+  const serviceOrderCollection = newClient
+    .db("dorkari")
+    .collection("service_order_collection");
   const serviceTypeCollection = newClient
     .db("dorkari")
     .collection("service-price");
@@ -113,6 +122,142 @@ newClient.connect((err) => {
     const { phoneNumber } = req.params;
     getUserDetails(phoneNumber, res);
   });
+  //get user data operation
+  app.get("/single_order/:id", async (req, res) => {
+    const { id } = req.params;
+    try {
+      await serviceOrderCollection.findOne({ _id: ObjectId(id) }).then((result) => {
+        if (result) {
+          res
+            .status(200)
+            .send({ success: true, data: result, message: "Order Found!" });
+        } else
+          res.status(404).send({
+            success: false,
+            data: null,
+            message: "No Order Data Found!",
+          });
+      });
+    } catch (error) {
+      res
+        .status(500)
+        .send({ success: false, data: null, message: "Failed to get data!" });
+    }
+    // getUserDetails(phoneNumber, res);
+  });
+  app.get("/get_orders/:phoneNumber", async (req, res) => {
+    const { phoneNumber } = req.params;
+    try {
+      await serviceOrderCollection.find({ phoneNumber: phoneNumber }).toArray().then((result) => {
+        if (result) {
+          res
+            .status(200)
+            .send({ success: true, data: result, message: "Orders Found!" });
+        } else
+          res.status(404).send({
+            success: false,
+            data: null,
+            message: "No Order Data Found!",
+          });
+      });
+    } catch (error) {
+      res
+        .status(500)
+        .send({ success: false, data: null, message: "Failed to get data!" });
+    }
+    // getUserDetails(phoneNumber, res);
+  });
+  app.get("/get_all_orders", async (req, res) => {
+    
+    try {
+      await serviceOrderCollection.find().toArray().then((result) => {
+        if (result) {
+          res
+            .status(200)
+            .send({ success: true, data: result, message: "Orders Found!" });
+        } else
+          res.status(404).send({
+            success: false,
+            data: null,
+            message: "No Order Data Found!",
+          });
+      });
+    } catch (error) {
+      res
+        .status(500)
+        .send({ success: false, data: null, message: "Failed to get data!" });
+    }
+    // getUserDetails(phoneNumber, res);
+  });
+  app.get("/get_all_users", async (req, res) => {
+    
+    try {
+      await regUserCollection.find().toArray().then((result) => {
+        if (result) {
+          res
+            .status(200)
+            .send({ success: true, data: result, message: "User Found!" });
+        } else
+          res.status(404).send({
+            success: false,
+            data: null,
+            message: "No user Data Found!",
+          });
+      });
+    } catch (error) {
+      res
+        .status(500)
+        .send({ success: false, data: null, message: "Failed to get data!" });
+    }
+    // getUserDetails(phoneNumber, res);
+  });
+  app.get("/get_property_by_user/:userId", async (req, res) => {
+
+    const {phoneNumber} = req.params;
+    // console.log(userId);
+    
+    try {
+      await properTyBookingCollection.find({phoneNumber:phoneNumber}).toArray().then((result) => {
+        if (result) {
+          console.log('paisee',result);
+          res
+            .status(200)
+            .send({ success: true, data: result, message: "User Found!" });
+        } else
+          res.status(404).send({
+            success: false,
+            data: null,
+            message: "No user Data Found!",
+          });
+      });
+    } catch (error) {
+      res
+        .status(500)
+        .send({ success: false, data: null, message: "Failed to get data!" });
+    }
+    // getUserDetails(phoneNumber, res);
+  });
+  app.get("/get_all_property_booking", async (req, res) => {
+    try {
+      await properTyBookingCollection.find().toArray().then((result) => {
+        if (result) {
+          res
+            .status(200)
+            .send({ success: true, data: result, message: "User Found!" });
+        } else
+          res.status(404).send({
+            success: false,
+            data: null,
+            message: "No user Data Found!",
+          });
+      });
+    } catch (error) {
+      res
+        .status(500)
+        .send({ success: false, data: null, message: "Failed to get data!" });
+    }
+    // getUserDetails(phoneNumber, res);
+  });
 
   // get doctor details
   // app.get('/doctorDetails/:id', (req, res) => {
@@ -126,6 +271,20 @@ newClient.connect((err) => {
       res
         .status(201)
         .send({ success: true, data: categoryData, message: "Data Found" });
+    } else {
+      res.status(400).send({
+        success: true,
+        data: null,
+        message: "Data not Found",
+      });
+    }
+  });
+  app.get("/all_property", async (req, res) => {
+    const propertyData = await getAllProperties(res);
+    if (propertyData?.length > 0) {
+      res
+        .status(201)
+        .send({ success: true, data: propertyData, message: "Data Found" });
     } else {
       res.status(400).send({
         success: true,
@@ -150,21 +309,51 @@ newClient.connect((err) => {
   });
 
   //doctor verify
-  // app.post('/verifyDoctor', async(req, res) => {
-  //     const { isVerified, id } = req.body;
-  //     try {
-  //         await doctorCollection.updateOne({ _id: ObjectID(id) }, {
-  //                 $set: { isVerified: isVerified },
-  //             })
-  //             .then(result => {
-  //                 if (result.acknowledged) {
-  //                     res.status(200).send({ success: true, data: result, message: 'Updated Successfully' });
-  //                 } else res.status(404).send({ success: false, data: null, message: 'Update failed' })
-  //             })
-  //     } catch (error) {
-  //         res.status(500).send({ success: false, data: null, message: error })
-  //     }
-  // })
+  app.post('/submit_payment_service', async(req, res) => {
+      const {_id, ...rest} = {...req.body};
+      
+      try {
+          await serviceOrderCollection.updateOne({ _id: ObjectId(_id) }, { $set: rest })
+              .then(result => {
+                console.log(result);
+                  if (result.acknowledged) {
+                      res.status(200).send({ success: true, data: result, message: 'All done Successfully' });
+                  } else res.status(404).send({ success: false, data: null, message: 'Update failed' })
+              })
+      } catch (error) {
+          res.status(500).send({ success: false, data: null, message: error })
+      }
+  })
+  app.post('/update_status', async(req, res) => {
+      const {_id,status} = req.body;
+      
+      try {
+          await serviceOrderCollection.updateOne({ _id: ObjectId(_id) }, { $set: {status:status} })
+              .then(result => {
+                console.log(result);
+                  if (result.acknowledged) {
+                      res.status(200).send({ success: true, data: result, message: 'Status Updated' });
+                  } else res.status(404).send({ success: false, data: null, message: 'Update failed' })
+              })
+      } catch (error) {
+          res.status(500).send({ success: false, data: null, message: error })
+      }
+  })
+  app.post('/booking_update_status', async(req, res) => {
+      const {_id,status} = req.body;
+      
+      try {
+          await properTyBookingCollection.updateOne({ _id: ObjectId(_id) }, { $set: {status:status} })
+              .then(result => {
+                console.log(result);
+                  if (result.acknowledged) {
+                      res.status(200).send({ success: true, data: result, message: 'Status Updated' });
+                  } else res.status(404).send({ success: false, data: null, message: 'Update failed' })
+              })
+      } catch (error) {
+          res.status(500).send({ success: false, data: null, message: error })
+      }
+  })
 
   // app.get('/getAllVerifiedDoctor', async(req, res) => {
   //     try {
@@ -179,18 +368,32 @@ newClient.connect((err) => {
   //     }
   // })
 
-  app.delete("/delete_category", async (req,res)=> {
-    const {_id} = req.body;
+  app.delete("/delete_category", async (req, res) => {
+    const { _id } = req.body;
     try {
       const deleteCategory = await categoryCollection.deleteOne({ _id: ObjectId(_id) });
-    if(deleteCategory.acknowledged) {
-      res.status(200).send({success:true,data:null,message:'Category Delete Successfull!'});
-    }
-    else {
-      res.status(400).send({success:false,data:null,message:'Category Delete failed!'});
-    }
+      if (deleteCategory.acknowledged) {
+        res.status(200).send({ success: true, data: null, message: 'Category Delete Successfull!' });
+      }
+      else {
+        res.status(400).send({ success: false, data: null, message: 'Category Delete failed!' });
+      }
     } catch (error) {
-      res.status(400).send({success:false,data:null,message:error});
+      res.status(400).send({ success: false, data: null, message: error });
+    }
+  })
+  app.delete("/delete_property", async (req, res) => {
+    const { _id } = req.body;
+    try {
+      const deleteCategory = await properTyCollection.deleteOne({ _id: ObjectId(_id) });
+      if (deleteCategory.acknowledged) {
+        res.status(200).send({ success: true, data: null, message: 'Property Delete Successfull!' });
+      }
+      else {
+        res.status(400).send({ success: false, data: null, message: 'Property Delete failed!' });
+      }
+    } catch (error) {
+      res.status(400).send({ success: false, data: null, message: error });
     }
   })
 
@@ -198,16 +401,90 @@ newClient.connect((err) => {
     // console.log(req.body);
     const service_data = req.body;
     const upadatedData = await addServiceIntoCategory(service_data, res);
-    if(upadatedData.ok) {
-      res.status(200).send({success:true,data:upadatedData,message:'Services Added Successfully!'})
+    if (upadatedData.ok) {
+      res.status(200).send({ success: true, data: upadatedData, message: 'Services Added Successfully!' })
     }
     else {
-      res.status(200).send({success:false,data:upadatedData,message:'Services Added failed!'})
+      res.status(200).send({ success: false, data: upadatedData, message: 'Services Added failed!' })
     }
     // const catData = await getAllCategories();
   });
 
+
   //create category api
+  app.post("/add_property", async (req, res) => {
+    // console.log(req.body)
+    const { propertyData } = req.body;
+    // console.log(categoryData);
+    propertyData?.length > 0 &&
+      propertyData.map(async (el) => {
+        try {
+          const result = await properTyCollection.insertOne(el);
+          if (result.acknowledged) {
+
+            res.status(201).send({
+              success: true,
+              data: result,
+              message: "Property Added Successfully",
+            });
+          }
+          else {
+            res.status(500).send({ success: false, data: result, message: 'Cannot Insert!' });
+          };
+
+        } catch (error) {
+          res.status(500).send({ success: false, data: null, message: error });
+        }
+      });
+  });
+  app.post("/add_property_book", async (req, res) => {
+    // console.log(req.body)
+    const bookingData = req.body;
+    // console.log(categoryData);
+ 
+    
+        try {
+          const result = await properTyBookingCollection.insertOne(bookingData);
+          if (result.acknowledged) {
+
+            res.status(201).send({
+              success: true,
+              data: result,
+              message: "Property Booked Successfully",
+            });
+          }
+          else {
+            res.status(500).send({ success: false, data: result, message: 'Cannot Insert!' });
+          };
+
+        } catch (error) {
+          res.status(500).send({ success: false, data: null, message: error });
+        }
+  });
+  //create category api
+  app.post("/create_order_for_service", async (req, res) => {
+    try {
+      const orderData = req.body;
+      const result = await serviceOrderCollection.insertOne(orderData);
+      if (result.acknowledged) {
+
+        res.status(201).send({
+          success: true,
+          data: result,
+          message: "Order create Successfully!",
+        });
+      }
+      else {
+        res.status(500).send({ success: false, data: result, message: 'Cannot Insert!' });
+      };
+
+    } catch (error) {
+      res.status(500).send({ success: false, data: null, message: error });
+    }
+
+  });
+
+
   app.post("/create_category", async (req, res) => {
     // console.log(req.body)
     const { categoryData } = req.body;
@@ -216,18 +493,18 @@ newClient.connect((err) => {
       categoryData.map(async (el) => {
         try {
           const result = await categoryCollection.insertOne(el);
-          if(result.acknowledged) {
-            
-              res.status(201).send({
-                success: true,
-                data: result,
-                message: "Category Added Successfully",
-              });
+          if (result.acknowledged) {
+
+            res.status(201).send({
+              success: true,
+              data: result,
+              message: "Category Added Successfully",
+            });
           }
-           else {
+          else {
             res.status(500).send({ success: false, data: result, message: 'Cannot Insert!' });
-            };
-           
+          };
+
         } catch (error) {
           res.status(500).send({ success: false, data: null, message: error });
         }
@@ -237,21 +514,21 @@ newClient.connect((err) => {
     const { serviceTypeData } = req.body;
     // console.log(categoryData);
     serviceTypeData?.length > 0 &&
-    serviceTypeData.map(async (el) => {
+      serviceTypeData.map(async (el) => {
         try {
           const result = await serviceTypeCollection.insertOne(el);
-          if(result.acknowledged) {
-            
-              res.status(201).send({
-                success: true,
-                data: result,
-                message: "Service Type Added Successfully",
-              });
+          if (result.acknowledged) {
+
+            res.status(201).send({
+              success: true,
+              data: result,
+              message: "Service Type Added Successfully",
+            });
           }
-           else {
+          else {
             res.status(500).send({ success: false, data: result, message: 'Cannot Insert!' });
-            };
-           
+          };
+
         } catch (error) {
           res.status(500).send({ success: false, data: null, message: error });
         }
@@ -265,11 +542,11 @@ newClient.connect((err) => {
         { _id: ObjectId(service_data.categoryFor) },
         { $push: { services: service_data } }
       );
-      
+
       return selectedCategory;
-      
+
     } catch (error) {
-      res.status(400).send({success:false,data:null,message:error})
+      res.status(400).send({ success: false, data: null, message: error })
     }
   };
 
@@ -528,7 +805,20 @@ newClient.connect((err) => {
       res.status(404).send({ success: false, data: null, message: error });
     }
   };
-  const getAllServiceType= async (res) => {
+  const getAllProperties = async (res) => {
+    try {
+      const data = await properTyCollection.find().toArray();
+      if (data.length > 0) {
+        return data;
+      }
+      else {
+        return null
+      };
+    } catch (error) {
+      res.status(404).send({ success: false, data: null, message: error });
+    }
+  };
+  const getAllServiceType = async (res) => {
     try {
       const data = await serviceTypeCollection.find().toArray();
       if (data.length > 0) {
